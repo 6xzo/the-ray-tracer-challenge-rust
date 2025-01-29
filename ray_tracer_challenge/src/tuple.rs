@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::cmp::PartialEq;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
@@ -98,7 +96,7 @@ impl Sub<Vector> for Vector {
 
     /// Subtract two vectors
     fn sub(self, other: Vector) -> Vector {
-        Vector::map_pairwise(|a, b| a + b, self, other)
+        Vector::map_pairwise(|a, b| a - b, self, other)
     }
 }
 
@@ -126,7 +124,7 @@ impl Div<f64> for Vector {
 
     /// Divide each element of the vector by a constant
     fn div(self, a: f64) -> Vector {
-        Vector::map_elementwise(|component| component * a, self)
+        Vector::map_elementwise(|component| component / a, self)
     }
 }
 
@@ -257,6 +255,20 @@ impl Sub<Vector> for Point {
     }
 }
 
+impl Sub<Point> for Point {
+    type Output = Vector;
+
+    /// Subtracts two points, p - q (i.e., self - other) to get a vector that
+    /// points from q (other) to p (self)
+    fn sub(self, other: Point) -> Vector {
+        Vector {
+            i: self.x - other.x,
+            j: self.y - other.y,
+            k: self.z - other.z,
+        }
+    }
+}
+
 impl Mul<f64> for Point {
     type Output = Point;
 
@@ -281,7 +293,7 @@ impl Div<f64> for Point {
 
     /// Divide each element of the point by a constant
     fn div(self, a: f64) -> Point {
-        Point::map_elementwise(|component| component * a, self)
+        Point::map_elementwise(|component| component / a, self)
     }
 }
 
@@ -397,7 +409,7 @@ pub fn normalize(v: Vector) -> Vector {
 
 /// Calculates the reflection of the vector across the normal vector
 pub fn reflect(vector: Vector, normal: Vector) -> Vector {
-    vector - normal * 2.0 * dot(vector, normal) * normal
+    vector - normal * 2.0 * dot(vector, normal)
 }
 
 //############################################################
@@ -414,6 +426,17 @@ mod tests {
     // this implementation.
 
     #[test]
+    fn point_creates_tuples() {
+        let p = point(4.0, -4.0, 3.0);
+        let q = Point {
+            x: 4.0,
+            y: -4.0,
+            z: 3.0,
+        };
+        assert_eq!(p, q);
+    }
+
+    #[test]
     fn vector_creates_tuples() {
         let u = vector(4.0, -4.0, 3.0);
         let v = Vector {
@@ -425,9 +448,164 @@ mod tests {
     }
 
     #[test]
+    fn adding_a_vector_to_a_point() {
+        let p = point(3.0, -2.0, 5.0);
+        let v = vector(-2.0, 3.0, 1.0);
+        assert_eq!(p + v, point(1.0, 1.0, 6.0));
+    }
+
+    #[test]
     fn adding_a_vector_to_a_vector() {
         let u = vector(1.0, 2.0, 3.0);
         let v = vector(4.0, 5.5, 6.5);
         assert_eq!(u + v, vector(5.0, 7.5, 9.5));
+    }
+
+    #[test]
+    fn subtracting_two_points() {
+        let p = point(3.0, 2.0, 1.0);
+        let q = point(5.0, 6.0, 7.0);
+        assert_eq!(p - q, vector(-2.0, -4.0, -6.0));
+    }
+
+    #[test]
+    fn subtracting_a_vector_from_a_point() {
+        let p = point(3.0, 2.0, 1.0);
+        let v = vector(5.0, 6.0, 7.0);
+        assert_eq!(p - v, point(-2.0, -4.0, -6.0));
+    }
+
+    #[test]
+    fn subtracting_two_vectors() {
+        let u = vector(3.0, 2.0, 1.0);
+        let v = vector(5.0, 6.0, 7.0);
+        assert_eq!(u - v, vector(-2.0, -4.0, -6.0));
+    }
+
+    #[test]
+    fn subtracting_a_vector_from_the_zero_vector() {
+        let zero = vector(0.0, 0.0, 0.0);
+        let v = vector(1.0, -2.0, 3.0);
+        assert_eq!(zero - v, vector(-1.0, 2.0, -3.0));
+    }
+
+    #[test]
+    fn negating_a_vector() {
+        let v = vector(1.0, -2.0, 3.0);
+        assert_eq!(-v, vector(-1.0, 2.0, -3.0));
+    }
+
+    #[test]
+    fn multiplying_a_point_by_a_scalar() {
+        let p = point(1.0, -2.0, 3.0);
+        assert_eq!(p * 3.5, point(3.5, -7.0, 10.5));
+    }
+
+    #[test]
+    fn multiplying_a_vector_by_a_scalar() {
+        let v = vector(1.0, -2.0, 3.0);
+        assert_eq!(v * 3.5, vector(3.5, -7.0, 10.5));
+    }
+
+    #[test]
+    fn multiplying_a_vector_by_a_fraction() {
+        let v = vector(1.0, -2.0, 3.0);
+        assert_eq!(v * 0.5, vector(0.5, -1.0, 1.5));
+    }
+
+    #[test]
+    fn dividing_a_point_by_a_scalar() {
+        let p = point(1.0, -2.0, 3.0);
+        assert_eq!(p / 2.0, point(0.5, -1.0, 1.5));
+    }
+
+    #[test]
+    fn dividing_a_vector_by_a_scalar() {
+        let v = vector(1.0, -2.0, 3.0);
+        assert_eq!(v / 2.0, vector(0.5, -1.0, 1.5));
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_1_0_0() {
+        let v = vector(1.0, 0.0, 0.0);
+        assert_eq!(magnitude(v), 1.0);
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_0_1_0() {
+        let v = vector(0.0, 1.0, 0.0);
+        assert_eq!(magnitude(v), 1.0);
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_0_0_1() {
+        let v = vector(0.0, 0.0, 1.0);
+        assert_eq!(magnitude(v), 1.0);
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_1_2_3() {
+        let v = vector(1.0, 2.0, 3.0);
+        assert_eq!(magnitude(v), f64::sqrt(14.0));
+    }
+
+    #[test]
+    fn computing_the_magnitude_of_vector_neg_1_neg_2_neg_3() {
+        let v = vector(-1.0, -2.0, -3.0);
+        assert_eq!(magnitude(v), f64::sqrt(14.0));
+    }
+
+    #[test]
+    fn normalizing_vector_4_0_0_gives_vector_1_0_0() {
+        let v = vector(4.0, 0.0, 0.0);
+        assert_eq!(normalize(v), vector(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn normalizing_vector_1_2_3() {
+        let v = vector(1.0, 2.0, 3.0);
+        assert_eq!(
+            normalize(v),
+            vector(
+                1.0 / f64::sqrt(14.0),
+                2.0 / f64::sqrt(14.0),
+                3.0 / f64::sqrt(14.0)
+            )
+        );
+    }
+
+    #[test]
+    fn the_magnitude_of_a_normalized_vector() {
+        let v = vector(1.0, 2.0, 3.0);
+        assert_eq!(magnitude(normalize(v)), 1.0);
+    }
+
+    #[test]
+    fn the_dot_product_of_two_vectors() {
+        let u = vector(1.0, 2.0, 3.0);
+        let v = vector(2.0, 3.0, 4.0);
+        assert_eq!(dot(u, v), 20.0);
+    }
+
+    #[test]
+    fn the_cross_product_of_two_vectors() {
+        let a = vector(1.0, 2.0, 3.0);
+        let b = vector(2.0, 3.0, 4.0);
+        assert_eq!(cross(a, b), vector(-1.0, 2.0, -1.0));
+        assert_eq!(cross(b, a), vector(1.0, -2.0, 1.0));
+    }
+
+    #[test]
+    fn reflecting_a_vector_approaching_at_45_degrees() {
+        let v = vector(1.0, -1.0, 0.0);
+        let n = vector(0.0, 1.0, 0.0);
+        assert_eq!(reflect(v, n), vector(1.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn reflecting_a_vector_off_a_slanted_surface() {
+        let v = vector(0.0, -1.0, 0.0);
+        let n = vector(f64::sqrt(2.0) / 2.0, f64::sqrt(2.0) / 2.0, 0.0);
+        assert_eq!(reflect(v, n), vector(1.0, 0.0, 0.0));
     }
 }
