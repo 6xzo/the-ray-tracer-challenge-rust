@@ -28,8 +28,16 @@ pub trait Tuple {
     /// homogeneous coordinate representation of the tuple.
     fn to_tuple_array(&self) -> [f64; 4];
 
+    /// Converts a 3D tuple-like element a column array of length four consisting of
+    /// the three components plus a fourth component. The array is essentially the
+    /// homogeneous coordinate representation of the tuple.
+    fn to_tuple_array_as_column(&self) -> [[f64; 1]; 4] {
+        let t = self.to_tuple_array();
+        [[t[0]], [t[1]], [t[2]], [t[3]]]
+    }
+
     /// Creates a 3D tuple-like element from a tuple array
-    fn from_tuple_array(t: [f64; 3]) -> Self::TupleType;
+    fn from_tuple_array(t: [f64; 4]) -> Self::TupleType;
 }
 
 //############################################################
@@ -166,7 +174,7 @@ impl Tuple for Vector {
         [self.i, self.j, self.k, 0.0]
     }
 
-    fn from_tuple_array(t: [f64; 3]) -> Vector {
+    fn from_tuple_array(t: [f64; 4]) -> Vector {
         Vector {
             i: t[0],
             j: t[1],
@@ -175,6 +183,7 @@ impl Tuple for Vector {
     }
 }
 
+/// Convenience function to create a vector
 pub fn vector(i: f64, j: f64, k: f64) -> Vector {
     Vector { i, j, k }
 }
@@ -335,7 +344,7 @@ impl Tuple for Point {
         [self.x, self.y, self.z, 1.0]
     }
 
-    fn from_tuple_array(t: [f64; 3]) -> Point {
+    fn from_tuple_array(t: [f64; 4]) -> Point {
         Point {
             x: t[0],
             y: t[1],
@@ -344,6 +353,7 @@ impl Tuple for Point {
     }
 }
 
+/// Convenience function to create a vector
 pub fn point(x: f64, y: f64, z: f64) -> Point {
     Point { x, y, z }
 }
