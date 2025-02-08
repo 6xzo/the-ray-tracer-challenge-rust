@@ -1,4 +1,4 @@
-# The Ray Tracer Challenge in F#
+# The Ray Tracer Challenge in Rust
 
 This repository is a Rust implementation of the ray tracer found in [*The Ray Tracer Challenge: A Test-Driven Guide to Your First 3D Renderer*](https://pragprog.com/titles/jbtracer/the-ray-tracer-challenge/) by Jamis Buck.
 
