@@ -38,14 +38,12 @@ impl<const ROWS: usize, const COLUMNS: usize> Matrix<ROWS, COLUMNS> {
             },
 
             MatrixType::Diagonal(value) => {
-                let data: [[f64; COLUMNS]; ROWS] =
-                    from_fn_2d(|row, column| if row == column { value } else { 0.0 });
+                let data = from_fn_2d(|row, column| if row == column { value } else { 0.0 });
                 Self { data }
             }
 
             MatrixType::Identity => {
-                let data: [[f64; COLUMNS]; ROWS] =
-                    from_fn_2d(|row, column| if row == column { 1.0 } else { 0.0 });
+                let data = from_fn_2d(|row, column| if row == column { 1.0 } else { 0.0 });
                 Self { data }
             }
         }
@@ -54,9 +52,9 @@ impl<const ROWS: usize, const COLUMNS: usize> Matrix<ROWS, COLUMNS> {
     /// Transposes the matrix and returns the transpose as a new matrix
     pub fn transpose(&self) -> Matrix<COLUMNS, ROWS> {
         let mut result = [[0.0; ROWS]; COLUMNS];
-        for row in 0..ROWS {
-            for column in 0..COLUMNS {
-                result[column][row] = self.data[row][column];
+        for (row_index, row) in self.data.iter().enumerate() {
+            for (column_index, &value) in row.iter().enumerate() {
+                result[column_index][row_index] = value;
             }
         }
         Matrix::new(result)
@@ -79,14 +77,10 @@ impl<const ROWS: usize, const COLUMNS: usize> PartialEq for Matrix<ROWS, COLUMNS
     /// a higher-order function, but this is simple and works, as I couldn't find a
     /// pre-included way in the Rust standard library for this.
     fn eq(&self, other: &Matrix<ROWS, COLUMNS>) -> bool {
-        for row in 0..ROWS {
-            for column in 0..COLUMNS {
-                if !compare_float(self[(row, column)], other[(row, column)]) {
-                    return false;
-                }
-            }
-        }
-        true
+        // Here's a way to do it with iterators...
+        let a = self.data.iter().flat_map(|v| v.iter());
+        let b = other.data.iter().flat_map(|v| v.iter());
+        a.zip(b).all(|(&a, &b)| compare_float(a, b))
     }
 }
 
@@ -108,14 +102,14 @@ impl<const ROWS: usize, const COLUMNS: usize, const COLUMNS2: usize> Mul<Matrix<
     }
 }
 
-impl<T: Tuple<TupleType = T>> Mul<T> for Matrix<4, 4> {
-    type Output = T;
+impl<T: Copy> Mul<Tuple<T>> for Matrix<4, 4> {
+    type Output = Tuple<T>;
 
     /// Multiplies a tuple on the left by a 4x4 matrix and returns a new tuple
-    fn mul(self, other: T) -> T {
-        let tuple: Matrix<4, 1> = Matrix::new(other.to_tuple_array_as_column());
+    fn mul(self, other: Tuple<T>) -> Tuple<T> {
+        let tuple: Matrix<4, 1> = Matrix::new(other.col4());
         let result = self * tuple;
-        T::from_tuple_array(result.transpose().data[0])
+        Tuple::from(result.transpose().data[0])
     }
 }
 
